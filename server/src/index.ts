@@ -10,6 +10,7 @@ import connectDB from "./config/connectDB";
 import authRoutes from "./routes/auth.route";
 import tradeRoutes from "./routes/trade.route";
 import { Server, Socket } from "socket.io";
+import WebSocket from "ws";
 // import "./cronjobs/tradeTime";
 
 
@@ -54,10 +55,41 @@ const io = new Server(server, {
     }
 });
 
+const binanceConnections: Record<string, WebSocket> = {};
+
 io.on("connection", (socket: Socket) => {
     console.log(`🔌 New client connected: ${socket.id}`);
 
+    socket.on("subscribeCandle", (symbol: string) => {
+        const lowerSymbol = symbol.toLowerCase();
+        console.log(`📡 Candle subscription for: ${lowerSymbol}`);
 
+        if (!binanceConnections[lowerSymbol]) {
+            const ws = new WebSocket(
+                `wss://stream.binance.com:9443/ws/${lowerSymbol}@kline_1m`
+            );
+
+            ws.on("open", () => console.log(`✅ Connected to Binance for ${lowerSymbol}`));
+            ws.on("close", () => console.log(`❌ Binance socket closed: ${lowerSymbol}`));
+
+            ws.on("message", (msg) => {
+                const data = JSON.parse(msg.toString());
+                const k = data.k;
+                const candle = {
+                    symbol: lowerSymbol.toUpperCase(),
+                    time: Math.floor(k.t / 1000),
+                    open: parseFloat(k.o),
+                    high: parseFloat(k.h),
+                    low: parseFloat(k.l),
+                    close: parseFloat(k.c),
+                    isFinal: k.x
+                };
+                io.emit("candleUpdate", candle);
+            });
+
+            binanceConnections[lowerSymbol] = ws;
+        }
+    });
     socket.on("placeTrade", async (data) => {
         const response = await placeTrade(data);
         io.emit("tradePlaced", response);
