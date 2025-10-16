@@ -82,8 +82,10 @@ io.on("connection", (socket: Socket) => {
                     high: parseFloat(k.h),
                     low: parseFloat(k.l),
                     close: parseFloat(k.c),
-                    isFinal: k.x
+                    isFinal: k.x,
+                    currentprice: parseFloat(k.c)
                 };
+                console.log(candle);
                 io.emit("candleUpdate", candle);
             });
 
