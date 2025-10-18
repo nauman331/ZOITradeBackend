@@ -210,4 +210,50 @@ interface ITrade {
 5. Implement data encryption for sensitive information
 6. Add backup and disaster recovery procedures
 
+### Health Check
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+const activeConnections = Object.keys(binanceConnections).length;
+const cachedSymbols = priceCache.getCachedSymbols();
+const rateLimiterStats = rateLimiter.getStats();
+
+    res.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        server: {
+            uptime: process.uptime(),
+            memory: process.memoryUsage(),
+        },
+        websockets: {
+            active: activeConnections,
+            symbols: cachedSymbols
+        },
+        rateLimiter: rateLimiterStats,
+        config: {
+            minStake: TRADING_CONFIG.STAKE.MIN,
+            maxStake: TRADING_CONFIG.STAKE.MAX,
+            payoutRatio: TRADING_CONFIG.PAYOUT.RATIO,
+            supportedAssets: TRADING_CONFIG.SUPPORTED_ASSETS.length
+        }
+    });
+
+});
+
+// Metrics endpoint (optional - for monitoring)
+app.get("/metrics", (req, res) => {
+res.json({
+timestamp: new Date().toISOString(),
+priceCache: {
+symbols: priceCache.getCachedSymbols().length,
+cached: priceCache.getCachedSymbols()
+},
+rateLimiter: rateLimiter.getStats(),
+websockets: {
+connections: Object.keys(binanceConnections).length,
+subscribers: Object.keys(subscriberCount).reduce((sum, key) => sum + subscriberCount[key], 0)
+}
+});
+});
+
 Happy trading! 📈💰
