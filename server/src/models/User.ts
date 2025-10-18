@@ -40,4 +40,10 @@ const userSchema = new Schema<IUser>({
     kycStatus: { type: String, enum: ["none", "pending", "approved", "rejected"], default: "none" },
 }, { timestamps: true });
 
+// Indexes for performance
+userSchema.index({ email: 1 }, { unique: true }); // For login
+userSchema.index({ googleId: 1 }, { sparse: true }); // For OAuth
+userSchema.index({ isActive: 1, role: 1 }); // For admin queries
+userSchema.index({ createdAt: -1 }); // For user analytics
+
 export const User = mongoose.model<IUser>("User", userSchema);

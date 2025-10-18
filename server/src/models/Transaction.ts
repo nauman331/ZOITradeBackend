@@ -20,5 +20,11 @@ const transactionSchema = new Schema<ITransaction>({
     updatedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
+// Indexes for performance
+transactionSchema.index({ userId: 1, createdAt: -1 }); // For user transaction history
+transactionSchema.index({ type: 1, status: 1 }); // For admin queries
+transactionSchema.index({ status: 1, createdAt: -1 }); // For pending transactions
+transactionSchema.index({ 'meta.tradeId': 1 }, { sparse: true }); // For trade-related transactions
+
 export const Transaction = mongoose.model<ITransaction>("Transaction", transactionSchema);
 

@@ -28,4 +28,11 @@ const TradeSchema: Schema = new Schema({
     payout: { type: Number, default: 0 }
 }, { timestamps: true });
 
+// Indexes for performance
+TradeSchema.index({ userId: 1, status: 1 }); // For user's active trades
+TradeSchema.index({ status: 1, expiryTime: 1 }); // For settlement cron job
+TradeSchema.index({ userId: 1, createdAt: -1 }); // For trade history
+TradeSchema.index({ asset: 1, createdAt: -1 }); // For asset statistics
+TradeSchema.index({ expiryTime: 1, status: 1 }); // For expired pending trades
+
 export const Trade = mongoose.model<ITrade>('Trade', TradeSchema);
